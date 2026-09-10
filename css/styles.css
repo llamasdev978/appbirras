@@ -204,6 +204,8 @@ h1, h2 { margin: 0; }
   box-shadow: 0 8px 24px rgba(255, 94, 158, 0.4);
   touch-action: none;
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 .fab.pressed { transform: scale(1.08); }
 .fab-hint {
@@ -332,6 +334,10 @@ h1, h2 { margin: 0; }
   z-index: 950;
   background: rgba(10, 8, 18, 0.7);
   backdrop-filter: blur(2px);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 .radial-center {
   position: absolute;

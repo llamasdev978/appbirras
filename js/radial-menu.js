@@ -84,7 +84,14 @@ export function attachHoldMenu(fabEl, { getItems, onSelect, onTap }) {
     itemEls = [];
   }
 
+  // Bloquea el menú "copiar / seleccionar" que el navegador muestra por
+  // defecto al mantener pulsado (esto es lo que causaba las burbujas del
+  // sistema operativo por encima de nuestro propio menú radial).
+  fabEl.addEventListener("contextmenu", (e) => e.preventDefault());
+  fabEl.addEventListener("selectstart", (e) => e.preventDefault());
+
   fabEl.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
     fabEl.setPointerCapture(e.pointerId);
     fabEl.classList.add("pressed");
     holdTimer = setTimeout(() => openRadial(e.clientX, e.clientY), HOLD_DELAY);
