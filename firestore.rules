@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// Reglas abiertas a propósito: la app no tiene login (se comparte un enlace
+// entre amigos en una fiesta). Cualquiera con el enlace y la config de
+// Firebase puede leer/escribir estas 3 colecciones. No guardes aquí nada
+// sensible. Si algún día quieres cerrarlo más, añade Firebase Auth y
+// restringe por request.auth.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /people/{personId} {
+      allow read, write: if true;
+    }
+
+    match /drinks/{drinkId} {
+      allow read, write: if true;
+    }
+
+    match /logs/{logId} {
+      allow read, write: if true;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

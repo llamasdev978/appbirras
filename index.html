@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14101f">
+<title>AppBirras 🍺</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍺</text></svg>">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div id="toast" class="toast" aria-live="polite"></div>
+
+<!-- ================= HOME ================= -->
+<section id="view-home" class="view">
+  <header class="topbar">
+    <h1>🍻 AppBirras</h1>
+    <button id="btn-open-settings" class="icon-btn" aria-label="Ajustes">⚙️</button>
+  </header>
+
+  <div id="people-list" class="people-list"></div>
+
+  <p id="home-empty" class="empty-hint" hidden>
+    Aún no hay nadie en la lista.<br>
+    Toca ⚙️ para añadir personas y bebidas.
+  </p>
+</section>
+
+<!-- ================= PERSON DETAIL ================= -->
+<section id="view-person" class="view" hidden>
+  <header class="topbar">
+    <button id="btn-back-home" class="icon-btn" aria-label="Volver">←</button>
+    <h1 id="person-name">—</h1>
+    <span class="topbar-spacer"></span>
+  </header>
+
+  <div class="summary-card">
+    <div class="summary-main">
+      <span id="summary-count" class="summary-number">0</span>
+      <span class="summary-label">bebidas</span>
+    </div>
+    <div class="summary-sub">
+      <div><strong id="summary-grams">0</strong> g de alcohol puro</div>
+      <div><strong id="summary-ube">0</strong> UBE</div>
+      <div id="summary-rate-wrap"><strong id="summary-rate">0</strong> bebidas/hora</div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Desglose</h2>
+  <div id="breakdown-list" class="breakdown-list"></div>
+
+  <h2 class="section-title">Últimas bebidas</h2>
+  <div id="recent-list" class="recent-list"></div>
+  <p id="recent-empty" class="empty-hint" hidden>Todavía no ha bebido nada... ¡empieza la fiesta!</p>
+
+  <div class="fab-zone">
+    <button id="fab-add" class="fab" aria-label="Mantén pulsado para elegir bebida">＋</button>
+    <p class="fab-hint">Toca para elegir · mantén pulsado para el menú rápido</p>
+  </div>
+</section>
+
+<!-- ================= SETTINGS ================= -->
+<section id="view-settings" class="view" hidden>
+  <header class="topbar">
+    <button id="btn-back-from-settings" class="icon-btn" aria-label="Volver">←</button>
+    <h1>Ajustes</h1>
+    <span class="topbar-spacer"></span>
+  </header>
+
+  <h2 class="section-title">Personas</h2>
+  <div id="settings-people-list" class="settings-list"></div>
+  <form id="form-add-person" class="add-form">
+    <input id="input-person-name" type="text" placeholder="Nombre" autocomplete="off" required maxlength="30">
+    <button type="submit" class="btn-primary">Añadir</button>
+  </form>
+
+  <h2 class="section-title">Bebidas</h2>
+  <div id="settings-drinks-list" class="settings-list"></div>
+  <form id="form-add-drink" class="add-form add-form-drink">
+    <input id="input-drink-emoji" type="text" placeholder="🍺" autocomplete="off" maxlength="4" class="emoji-input">
+    <input id="input-drink-name" type="text" placeholder="Nombre (ej. Cerveza)" autocomplete="off" required maxlength="30">
+    <input id="input-drink-ml" type="number" placeholder="ml" min="1" max="2000" required>
+    <input id="input-drink-abv" type="number" placeholder="% vol" min="0" max="100" step="0.1" required>
+    <button type="submit" class="btn-primary">Añadir bebida</button>
+  </form>
+</section>
+
+<!-- ================= DRINK PICKER MODAL (tap fallback) ================= -->
+<div id="picker-modal" class="modal" hidden>
+  <div class="modal-backdrop" id="picker-backdrop"></div>
+  <div class="modal-sheet">
+    <h2>¿Qué se ha bebido?</h2>
+    <div id="picker-list" class="picker-list"></div>
+    <button id="picker-cancel" class="btn-secondary">Cancelar</button>
+  </div>
+</div>
+
+<!-- ================= RADIAL MENU LAYER ================= -->
+<div id="radial-layer" class="radial-layer" hidden></div>
+
+<!-- ================= FIRST-RUN CONFIG WARNING ================= -->
+<div id="config-warning" class="modal" hidden>
+  <div class="modal-backdrop"></div>
+  <div class="modal-sheet">
+    <h2>Falta configurar Firebase</h2>
+    <p>Edita <code>js/firebase-config.js</code> con las claves de tu proyecto de Firebase para que la app pueda guardar y sincronizar los datos. Revisa el <code>README.md</code> para los pasos.</p>
+    <button id="config-warning-close" class="btn-secondary">Entendido</button>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
