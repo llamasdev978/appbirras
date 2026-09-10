@@ -5,12 +5,12 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/fireba
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 export const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_PROYECTO.firebaseapp.com",
-  projectId: "TU_PROYECTO",
-  storageBucket: "TU_PROYECTO.appspot.com",
-  messagingSenderId: "TU_SENDER_ID",
-  appId: "TU_APP_ID",
+  apiKey: "AIzaSyCGRXn3VdUVPrdAbrQbP-aEK6N3YOkcO6s",
+  authDomain: "appbirras.firebaseapp.com",
+  projectId: "appbirras",
+  storageBucket: "appbirras.firebasestorage.app",
+  messagingSenderId: "506682950794",
+  appId: "1:506682950794:web:09f0d3e0a25d8b65309973",
 };
 
 export const isConfigured = firebaseConfig.apiKey !== "TU_API_KEY";
