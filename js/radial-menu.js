@@ -1,27 +1,36 @@
 import { vibrate } from "./utils.js";
 
-const HOLD_DELAY = 280; // ms to trigger the radial menu
-const HIT_RADIUS = 46; // px around an item that counts as "hovering" it
+// Umbral MUY por debajo del long-press nativo del móvil (~500ms) para que
+// nuestro menú tome el control del gesto antes de que el sistema operativo
+// tenga ocasión de interpretarlo como "seleccionar texto". Cualquier
+// movimiento del dedo también abre el menú al instante.
+const OPEN_DELAY = 100; // ms
+const DRAG_THRESHOLD = 10; // px
+const HIT_RADIUS = 46; // px alrededor de un item que cuenta como "encima"
 
 /**
- * Attaches press-and-hold radial menu behaviour to a button.
- * - Quick tap -> onTap() (used for a simple list-picker fallback)
- * - Press & hold -> opens a radial menu fanned above the button; sliding the
- *   finger over an item highlights it, lifting the finger there selects it.
+ * Attaches press menu behaviour to a button.
+ * - Toque rápido y suelto (sin moverse, por debajo de OPEN_DELAY) -> onTap()
+ *   (lista simple de selección, como alternativa accesible).
+ * - Cualquier otro toque (se mantiene un poco o se arrastra) -> abre un menú
+ *   radial fanned sobre el botón; deslizar sobre un item lo resalta, soltar
+ *   ahí lo selecciona.
  *
  * @param {HTMLElement} fabEl
  * @param {{ getItems: () => Array<{id:string, emoji?:string, name:string}>, onSelect: (id:string) => void, onTap?: () => void }} opts
  */
 export function attachHoldMenu(fabEl, { getItems, onSelect, onTap }) {
   const layer = document.getElementById("radial-layer");
-  let holdTimer = null;
+  let openTimer = null;
   let radialOpen = false;
   let activeItemId = null;
   let itemEls = [];
+  let startX = 0;
+  let startY = 0;
 
-  function clearHold() {
-    clearTimeout(holdTimer);
-    holdTimer = null;
+  function clearOpenTimer() {
+    clearTimeout(openTimer);
+    openTimer = null;
   }
 
   function openRadial(x, y) {
@@ -85,8 +94,7 @@ export function attachHoldMenu(fabEl, { getItems, onSelect, onTap }) {
   }
 
   // Bloquea el menú "copiar / seleccionar" que el navegador muestra por
-  // defecto al mantener pulsado (esto es lo que causaba las burbujas del
-  // sistema operativo por encima de nuestro propio menú radial).
+  // defecto al mantener pulsado.
   fabEl.addEventListener("contextmenu", (e) => e.preventDefault());
   fabEl.addEventListener("selectstart", (e) => e.preventDefault());
 
@@ -94,17 +102,26 @@ export function attachHoldMenu(fabEl, { getItems, onSelect, onTap }) {
     e.preventDefault();
     fabEl.setPointerCapture(e.pointerId);
     fabEl.classList.add("pressed");
-    holdTimer = setTimeout(() => openRadial(e.clientX, e.clientY), HOLD_DELAY);
+    startX = e.clientX;
+    startY = e.clientY;
+    openTimer = setTimeout(() => openRadial(startX, startY), OPEN_DELAY);
   });
 
   fabEl.addEventListener("pointermove", (e) => {
+    if (!radialOpen) {
+      const moved = Math.hypot(e.clientX - startX, e.clientY - startY);
+      if (moved > DRAG_THRESHOLD) {
+        clearOpenTimer();
+        openRadial(startX, startY);
+      }
+    }
     if (radialOpen) updateActive(e.clientX, e.clientY);
   });
 
   fabEl.addEventListener("pointerup", () => {
     fabEl.classList.remove("pressed");
     const wasOpen = radialOpen;
-    clearHold();
+    clearOpenTimer();
     if (wasOpen) {
       closeRadial(true);
     } else if (onTap) {
@@ -114,7 +131,7 @@ export function attachHoldMenu(fabEl, { getItems, onSelect, onTap }) {
 
   fabEl.addEventListener("pointercancel", () => {
     fabEl.classList.remove("pressed");
-    clearHold();
+    clearOpenTimer();
     if (radialOpen) closeRadial(false);
   });
 }
