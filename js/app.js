@@ -1,6 +1,5 @@
 import { isConfigured } from "./firebase-config.js";
 import * as db from "./db.js";
-import { attachHoldMenu } from "./radial-menu.js";
 import {
   gramsOfAlcohol,
   toUBE,
@@ -239,12 +238,8 @@ document.getElementById("form-add-drink").addEventListener("submit", (e) => {
   e.target.reset();
 });
 
-// ---------- Radial / hold menu on FAB ----------
-attachHoldMenu(els.fab, {
-  getItems: () => drinks,
-  onSelect: (drinkId) => addDrinkLog(drinkId),
-  onTap: () => openPickerModal(),
-});
+// ---------- FAB ----------
+els.fab.addEventListener("click", () => openPickerModal());
 
 // ---------- Config warning ----------
 document.getElementById("config-warning-close").addEventListener("click", () => {

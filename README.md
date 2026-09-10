@@ -13,10 +13,8 @@ Firebase Firestore como base de datos gratuita).
 - **Detalle de persona**: resumen (nº de bebidas, gramos de alcohol puro,
   UBEs, ritmo), desglose por tipo de bebida y las últimas bebidas (con botón
   ✕ para deshacer un toque accidental).
-- **Botón ＋**:
-  - Toque rápido → abre una lista simple para elegir la bebida.
-  - **Mantener pulsado** → aparece un menú radial con todas las bebidas;
-    desliza el dedo hasta la que quieras y suelta para añadirla.
+- **Botón ＋**: toca para abrir una cuadrícula con todas las bebidas y elige
+  la que corresponda.
 - **⚙️ Ajustes**: añade o elimina personas y bebidas (nombre, emoji, ml y
   % de alcohol) sobre la marcha, en cualquier momento.
 
