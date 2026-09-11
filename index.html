@@ -16,7 +16,7 @@
 <!-- ================= HOME ================= -->
 <section id="view-home" class="view">
   <header class="topbar">
-    <span class="topbar-spacer"></span>
+    <button id="btn-open-stats" class="icon-btn" aria-label="Estadísticas">🏆</button>
     <h1>🍻 AppBirras</h1>
     <button id="btn-open-settings" class="icon-btn" aria-label="Ajustes">⚙️</button>
   </header>
@@ -59,6 +59,51 @@
   <div class="fab-zone">
     <button id="fab-add" class="fab" aria-label="Añadir bebida">＋</button>
     <p class="fab-hint">Toca para añadir una bebida</p>
+  </div>
+</section>
+
+<!-- ================= STATS (leaderboards + charts) ================= -->
+<section id="view-stats" class="view" hidden>
+  <header class="topbar">
+    <button id="btn-back-from-stats" class="icon-btn" aria-label="Volver">←</button>
+    <h1>Estadísticas</h1>
+    <span class="topbar-spacer"></span>
+  </header>
+
+  <div class="tab-bar" role="tablist">
+    <button class="tab-btn" data-tab="general" role="tab" aria-selected="true">🏆 General</button>
+    <button class="tab-btn" data-tab="beer" role="tab" aria-selected="false">🍺 Cervezas</button>
+    <button class="tab-btn" data-tab="charts" role="tab" aria-selected="false">📊 Gráficos</button>
+  </div>
+
+  <div id="tab-general" class="tab-panel">
+    <div id="leaderboard-general" class="leaderboard-list"></div>
+    <p id="leaderboard-general-empty" class="empty-hint" hidden>Nadie ha bebido nada todavía.</p>
+  </div>
+
+  <div id="tab-beer" class="tab-panel" hidden>
+    <div id="leaderboard-beer" class="leaderboard-list"></div>
+    <p id="leaderboard-beer-empty" class="empty-hint" hidden>
+      Nadie ha bebido cerveza todavía.<br>
+      <small>(Cuenta como cerveza cualquier bebida con 🍺 en el emoji, o "cerveza"/"birra" en el nombre.)</small>
+    </p>
+  </div>
+
+  <div id="tab-charts" class="tab-panel viz-root" hidden>
+    <div id="kpi-row" class="kpi-row" hidden></div>
+    <div class="chart-card" hidden>
+      <h2 class="section-title">Alcohol por persona</h2>
+      <div id="chart-alcohol" class="chart-wrap"></div>
+    </div>
+    <div class="chart-card" hidden>
+      <h2 class="section-title">Bebidas por tipo</h2>
+      <div id="chart-drinktypes" class="chart-wrap"></div>
+    </div>
+    <div class="chart-card" hidden>
+      <h2 class="section-title">Consumo a lo largo de la noche</h2>
+      <div id="chart-timeline" class="chart-wrap"></div>
+    </div>
+    <p id="charts-empty" class="empty-hint">Todavía no hay bebidas registradas para mostrar gráficos.</p>
   </div>
 </section>
 

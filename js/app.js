@@ -8,6 +8,7 @@ import {
   initials,
   formatTime,
   toast,
+  isBeerDrink,
 } from "./utils.js";
 
 let people = [];
@@ -15,11 +16,29 @@ let drinks = [];
 let logs = [];
 let currentPersonId = null;
 let currentView = "home";
+let currentStatsTab = "general";
 
 const els = {
   home: document.getElementById("view-home"),
   person: document.getElementById("view-person"),
   settings: document.getElementById("view-settings"),
+  stats: document.getElementById("view-stats"),
+  tabBtns: Array.from(document.querySelectorAll(".tab-btn")),
+  tabPanels: {
+    general: document.getElementById("tab-general"),
+    beer: document.getElementById("tab-beer"),
+    charts: document.getElementById("tab-charts"),
+  },
+  leaderboardGeneral: document.getElementById("leaderboard-general"),
+  leaderboardGeneralEmpty: document.getElementById("leaderboard-general-empty"),
+  leaderboardBeer: document.getElementById("leaderboard-beer"),
+  leaderboardBeerEmpty: document.getElementById("leaderboard-beer-empty"),
+  kpiRow: document.getElementById("kpi-row"),
+  chartAlcohol: document.getElementById("chart-alcohol"),
+  chartDrinktypes: document.getElementById("chart-drinktypes"),
+  chartTimeline: document.getElementById("chart-timeline"),
+  chartsEmpty: document.getElementById("charts-empty"),
+  chartCards: Array.from(document.querySelectorAll("#tab-charts .chart-card")),
   peopleList: document.getElementById("people-list"),
   homeEmpty: document.getElementById("home-empty"),
   personName: document.getElementById("person-name"),
@@ -43,6 +62,7 @@ function showView(name) {
   els.home.hidden = name !== "home";
   els.person.hidden = name !== "person";
   els.settings.hidden = name !== "settings";
+  els.stats.hidden = name !== "stats";
 }
 
 function tsToDate(ts) {
@@ -174,6 +194,185 @@ function rerenderCurrent() {
   renderPeopleList();
   if (currentView === "person") renderPersonDetail();
   if (currentView === "settings") renderSettings();
+  if (currentView === "stats") renderStatsTab();
+}
+
+// ---------- Stats (leaderboards + charts) ----------
+function medalFor(rank) {
+  return rank === 0 ? "🥇" : rank === 1 ? "🥈" : rank === 2 ? "🥉" : `${rank + 1}`;
+}
+
+function renderLeaderboard(container, emptyEl, entries, formatValue) {
+  container.innerHTML = "";
+  emptyEl.hidden = entries.length > 0;
+  if (!entries.length) return;
+  const max = Math.max(...entries.map((e) => e.value), 1);
+  entries.forEach((entry, i) => {
+    const pct = entry.value > 0 ? Math.max((entry.value / max) * 100, 4) : 0;
+    const row = document.createElement("div");
+    row.className = "leaderboard-row" + (i === 0 && entry.value > 0 ? " is-first" : "");
+    row.innerHTML = `
+      <span class="leaderboard-rank">${medalFor(i)}</span>
+      <span class="avatar avatar-sm" style="background:${colorForName(entry.name)}">${initials(entry.name)}</span>
+      <span class="leaderboard-info">
+        <span class="leaderboard-name">${escapeHtml(entry.name)}</span>
+        <span class="leaderboard-bar-track"><span class="leaderboard-bar-fill" style="width:${pct}%"></span></span>
+      </span>
+      <span class="leaderboard-value">${formatValue(entry.value)}</span>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function renderLeaderboardGeneral() {
+  const entries = people
+    .map((p) => ({ name: p.name, value: computeStats(p.id).grams }))
+    .sort((a, b) => b.value - a.value);
+  renderLeaderboard(els.leaderboardGeneral, els.leaderboardGeneralEmpty, entries, (v) => `${round1(v)} g`);
+}
+
+function renderLeaderboardBeer() {
+  const entries = people
+    .map((p) => {
+      const count = logs.filter(
+        (l) => l.personId === p.id && isBeerDrink(drinks.find((d) => d.id === l.drinkId))
+      ).length;
+      return { name: p.name, value: count };
+    })
+    .filter((e) => e.value > 0)
+    .sort((a, b) => b.value - a.value);
+  renderLeaderboard(els.leaderboardBeer, els.leaderboardBeerEmpty, entries, (v) => `${v} 🍺`);
+}
+
+function computeGlobalStats() {
+  const totalDrinks = logs.length;
+  const totalGrams = people.reduce((sum, p) => sum + computeStats(p.id).grams, 0);
+  const activePeople = people.filter((p) => computeStats(p.id).count > 0).length;
+  let rate = 0;
+  if (logs.length >= 2) {
+    const times = logs.map((l) => tsToDate(l.createdAt).getTime());
+    const spanHours = (Math.max(...times) - Math.min(...times)) / 3600000;
+    if (spanHours > 0) rate = logs.length / spanHours;
+  }
+  return { totalDrinks, totalGrams, activePeople, rate };
+}
+
+function computeDrinkTypeCounts() {
+  const counts = new Map();
+  for (const log of logs) counts.set(log.drinkId, (counts.get(log.drinkId) || 0) + 1);
+  return drinks
+    .map((d) => ({ label: `${d.emoji} ${d.name}`, value: counts.get(d.id) || 0 }))
+    .filter((d) => d.value > 0)
+    .sort((a, b) => b.value - a.value);
+}
+
+function renderBarChart(container, data, seriesClass, formatValue) {
+  container.innerHTML = "";
+  if (!data.length) {
+    container.innerHTML = `<p class="empty-hint">Sin datos todavía</p>`;
+    return;
+  }
+  const max = Math.max(...data.map((d) => d.value));
+  for (const d of data) {
+    const pct = max > 0 ? Math.max((d.value / max) * 100, 3) : 0;
+    const row = document.createElement("div");
+    row.className = "bar-row";
+    row.innerHTML = `
+      <span class="bar-label">${escapeHtml(d.label)}</span>
+      <span class="bar-track"><span class="bar-fill ${seriesClass}" style="width:${pct}%"></span></span>
+      <span class="bar-value">${formatValue(d.value)}</span>
+    `;
+    container.appendChild(row);
+  }
+}
+
+function renderTimelineChart(container, logsSorted) {
+  container.innerHTML = "";
+  if (logsSorted.length < 2) {
+    container.innerHTML = `<p class="empty-hint">Necesitas al menos 2 bebidas registradas para ver esta gráfica.</p>`;
+    return;
+  }
+  const width = 320;
+  const height = 160;
+  const padL = 6;
+  const padR = 6;
+  const padT = 14;
+  const padB = 14;
+  const times = logsSorted.map((l) => tsToDate(l.createdAt).getTime());
+  const t0 = times[0];
+  const t1 = times[times.length - 1];
+  const span = Math.max(t1 - t0, 1);
+  const total = logsSorted.length;
+  const points = logsSorted.map((l, i) => {
+    const x = padL + ((tsToDate(l.createdAt).getTime() - t0) / span) * (width - padL - padR);
+    const y = padT + (1 - (i + 1) / total) * (height - padT - padB);
+    return [x, y];
+  });
+  const linePath = points.map((p, i) => (i === 0 ? `M${p[0]},${p[1]}` : `L${p[0]},${p[1]}`)).join(" ");
+  const baseline = height - padB;
+  const areaPath = `${linePath} L${points[points.length - 1][0]},${baseline} L${points[0][0]},${baseline} Z`;
+  const last = points[points.length - 1];
+
+  container.innerHTML = `
+    <svg viewBox="0 0 ${width} ${height}" class="line-chart-svg" role="img" aria-label="Bebidas acumuladas a lo largo del tiempo">
+      <line x1="${padL}" y1="${baseline}" x2="${width - padR}" y2="${baseline}" class="chart-axis" />
+      <path d="${areaPath}" class="chart-area" />
+      <path d="${linePath}" class="chart-line" />
+      <circle cx="${last[0]}" cy="${last[1]}" r="4" class="chart-dot" />
+    </svg>
+    <div class="chart-timeline-labels">
+      <span>${formatTime(new Date(t0))}</span>
+      <span class="chart-timeline-end-label">${total} bebidas · ${formatTime(new Date(t1))}</span>
+    </div>
+  `;
+}
+
+function renderChartsTab() {
+  const hasData = logs.length > 0;
+  els.chartsEmpty.hidden = hasData;
+  els.kpiRow.hidden = !hasData;
+  for (const card of els.chartCards) card.hidden = !hasData;
+  if (!hasData) return;
+
+  const g = computeGlobalStats();
+  els.kpiRow.innerHTML = `
+    <div class="kpi-tile"><span class="kpi-value">${g.totalDrinks}</span><span class="kpi-label">bebidas totales</span></div>
+    <div class="kpi-tile"><span class="kpi-value">${round1(g.totalGrams)}</span><span class="kpi-label">g alcohol total</span></div>
+    <div class="kpi-tile"><span class="kpi-value">${g.activePeople}</span><span class="kpi-label">personas activas</span></div>
+    <div class="kpi-tile"><span class="kpi-value">${round1(g.rate)}</span><span class="kpi-label">bebidas/hora (grupo)</span></div>
+  `;
+
+  const alcoholData = people
+    .map((p) => ({ label: p.name, value: computeStats(p.id).grams }))
+    .filter((d) => d.value > 0)
+    .sort((a, b) => b.value - a.value);
+  renderBarChart(els.chartAlcohol, alcoholData, "series-1", (v) => `${round1(v)} g`);
+
+  renderBarChart(els.chartDrinktypes, computeDrinkTypeCounts(), "series-2", (v) => `${v}`);
+
+  const sortedLogs = [...logs].sort((a, b) => tsToDate(a.createdAt) - tsToDate(b.createdAt));
+  renderTimelineChart(els.chartTimeline, sortedLogs);
+}
+
+function renderStatsTab() {
+  if (currentStatsTab === "general") renderLeaderboardGeneral();
+  else if (currentStatsTab === "beer") renderLeaderboardBeer();
+  else renderChartsTab();
+}
+
+function showStatsTab(tab) {
+  currentStatsTab = tab;
+  for (const btn of els.tabBtns) {
+    const active = btn.dataset.tab === tab;
+    btn.classList.toggle("active", active);
+    btn.setAttribute("aria-selected", String(active));
+  }
+  for (const [key, panel] of Object.entries(els.tabPanels)) panel.hidden = key !== tab;
+  renderStatsTab();
+}
+
+for (const btn of els.tabBtns) {
+  btn.addEventListener("click", () => showStatsTab(btn.dataset.tab));
 }
 
 // ---------- Picker modal (tap fallback, no hold needed) ----------
@@ -216,6 +415,11 @@ document.getElementById("btn-open-settings").addEventListener("click", () => {
 });
 document.getElementById("btn-back-from-settings").addEventListener("click", () => showView("home"));
 document.getElementById("btn-back-home").addEventListener("click", () => showView("home"));
+document.getElementById("btn-open-stats").addEventListener("click", () => {
+  showView("stats");
+  showStatsTab(currentStatsTab);
+});
+document.getElementById("btn-back-from-stats").addEventListener("click", () => showView("home"));
 
 // ---------- Add person / drink forms ----------
 document.getElementById("form-add-person").addEventListener("submit", (e) => {

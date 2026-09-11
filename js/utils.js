@@ -49,3 +49,14 @@ export function toast(msg) {
 export function vibrate(pattern) {
   if (navigator.vibrate) navigator.vibrate(pattern);
 }
+
+const BEER_KEYWORDS = ["cerveza", "birra", "beer", "caña", "cana", "lager", "ipa", "pilsner", "stout"];
+
+// Las bebidas son libres (nombre/emoji definidos por el usuario), así que
+// identificamos "cerveza" por convención: emoji 🍺 o alguna palabra típica en el nombre.
+export function isBeerDrink(drink) {
+  if (!drink) return false;
+  if (drink.emoji && drink.emoji.includes("🍺")) return true;
+  const name = (drink.name || "").toLowerCase();
+  return BEER_KEYWORDS.some((kw) => name.includes(kw));
+}
